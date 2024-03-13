@@ -1,172 +1,234 @@
-# color_mixer.py
+# text_compare.py
 # Written by Elias Retzlaff
 
-import webbrowser
+import math
 
-import os
+import string
 
-def read_color_table(table):
+stem_list = ["s", "ing", "ed", "ly"]
 
-    infile = open('colors.txt')
+stop_list = { "the", "a", "to", "and", "of", "in", "it", "that", "for", "so", 
 
-    for line in infile:
+             "am", "is", "are", "was", "be", "were", "been", "being", "from", "by",
 
-        items = line.split()
+             "as", "with", "not", "was", "on", "at", "its", "but", "have", "has",
 
-        color_name = items[0]
+             "had" }
 
-        red = int(items[1])
+files = ['docs/BellowAugieMarch.txt', 'docs/wizard_of_oz.txt', 'docs/moby_dick.txt',
 
-        green = int(items[2])
+         'docs/alice_in_wonderland.txt', 'docs/SinclairJungle.txt',
 
-        blue = int(items[3])
+         'docs/tale_of_two_cities.txt', 'docs/frankenstein.txt', 'docs/dracula.txt',
 
-        table[color_name] = { 'r': red, 'g': green, 'b': blue }
+         'docs/udolpho.txt', 'docs/pride_and_prejudice.txt',
 
-color_table = {}
+         'docs/WilkersonWarmthofOtherSuns.txt', 'docs/jane_eyre.txt']
 
-read_color_table(color_table)
+def clean_word(word):
 
-def build_header_code(content):
+    word = word.strip(string.punctuation)
 
-    template = "<h1>{}</h1>"
+    word = word.lower()
 
-    return template.format(content)
+    word = stem(word)
 
-def build_color_code(rgb):
+    return word
 
-    template = "<p style='color:rgb({}, {}, {})'>Sample Color</p>"
+def stem(word):
 
-    return template.format(rgb['r'], rgb['g'], rgb['b'])
+    for suffix in stem_list:
 
-def show_color(color):
+        if word.endswith(suffix) and len(word) / len(suffix) > 3:
 
-    color = color.upper()
+            return word[0:-len(suffix)]
 
-    color_values = color_table[color]
+    return word
 
-    render_color_code(color_values)
+def count_word(word_table, item):
 
-def render_color_code(color_dictionary):
+    word = clean_word(item)
 
-    file_name = "color.html"
+    if word in word_table:
 
-    outfile = open(file_name, "w")
-
-    outfile.write(build_header_code('Color Display Demo'))
-
-    outfile.write(build_color_code(color_dictionary))
-
-    outfile.close()
-
-    current_folder = os.getcwd()
-
-    full_file_url = "file:" + current_folder + "/" + file_name
-
-    webbrowser.open(full_file_url)
-
-def blue_amount():
-
-    color_x = input("Provide a color from colors.txt: ").upper()
-
-    
-
-    blue_amount_x = color_table[color_x]['b']
-
-    print(f'Amount of blue in {color_x}:', blue_amount_x)
-
-def color_splits():
-
-    color_x = input("Provide a color from colors.txt: ").upper()
-
-    
-
-    red_x = color_table[color_x]['r']
-
-    green_x = color_table[color_x]['g']
-
-    blue_x = color_table[color_x]['b']
-
-    print(f'Red in {color_x}:', red_x)
-
-    print(f'Green in {color_x}:', green_x)
-
-    print(f'Blue in {color_x}:', blue_x)
-
-def num_colors():
-
-    num_colors = len(color_table)
-
-    print("Number of different colors that show_color can display:", num_colors)
-
-def demo_color():
-
-    color_input = input("Enter a color: ").upper()  
-
-    if color_input in color_table:
-
-        color_values = color_table[color_input] 
-
-        print(f"Red: {color_values['r']}")
-
-        print(f"Green: {color_values['g']}")
-
-        print(f"Blue: {color_values['b']}")
-
-        render_color_code(color_values) 
+        word_table[word] = word_table[word] + 1
 
     else:
 
-        print("Color not found in the color table.")
+        word_table[word] = 1
 
-def demo_blend(color1, color2):
+def similarity(tableA, tableB):
 
-    color1 = color1.upper()
+    words = set(tableA.keys()).union(tableB.keys())
 
-    color2 = color2.upper()
+    
 
-    if color1 in color_table and color2 in color_table:
+    ab = 0
 
-        color1_values = color_table[color1]
+    a2 = 0
 
-        color2_values = color_table[color2]
+    b2 = 0
 
-        avg_red = (color1_values['r'] + color2_values['r']) // 2
+    for w in words:
 
-        avg_green = (color1_values['g'] + color2_values['g']) // 2
+        ab += tableA.get(w, 0) * tableB.get(w, 0)
 
-        avg_blue = (color1_values['b'] + color2_values['b']) // 2
+        a2 += tableA.get(w, 0) * tableA.get(w, 0)
 
-        print("Averages of blended color:")
+        b2 += tableB.get(w, 0) * tableB.get(w, 0)
 
-        print(f"Red: {avg_red}")
+    return ab / (math.sqrt(a2) * math.sqrt(b2))
 
-        print(f"Green: {avg_green}")
+def display_counts(file_name):
 
-        print(f"Blue: {avg_blue}")
+    fd = open(file_name, 'r', encoding="utf8")
 
-        blended_color = {'r': avg_red, 'g': avg_green, 'b': avg_blue}
+    word_list = fd.read().split()
 
-        render_color_code(blended_color)
+    word_table = dict()
 
-    else:
+    for word in word_list:
 
-        print("One or both colors not found in the color table.")
+        count_word(word_table, word)
 
-def render_color_code(color_dictionary):
+    print(f"The word 'dance' appears {word_table.get('dance', 0)} times!")
 
-    file_name = "color.html"
+    fd.close()
 
-    outfile = open(file_name, "w")
+def display_counts2(file_name, search_list):
 
-    outfile.write(build_header_code('Color Display Demo'))
+    fd = open(file_name, 'r', encoding="utf8")
 
-    outfile.write(build_color_code(color_dictionary))
+    word_list = fd.read().split()
 
-    outfile.close()
+    word_table = dict()
 
-    current_folder = os.getcwd()
+    for word in word_list:
 
-    full_file_url = "file:" + current_folder + "/" + file_name
+        count_word(word_table, word)
 
-    webbrowser.open(full_file_url)
+        
+
+    for w in search_list:
+
+        print(f"The word '{w}' appears {word_table.get(w, 0)} times!")
+
+    fd.close()
+
+def display_counts3(file_name, search_list):
+
+    fd = open(file_name, 'r', encoding="utf8")
+
+    word_list = fd.read().split()
+
+    num_words = len(word_list)
+
+    word_table = dict()
+
+    for word in word_list:
+
+        count_word(word_table, word)
+
+        
+
+    for w in search_list:
+
+        print(f"The word '{w}' appears {word_table.get(w, 0) / num_words *100} % times!")
+
+    fd.close()
+
+def display_counts4(search_word):
+
+    for file_name in files:
+
+        word_table = get_word_table(file_name)
+
+        print(f"Counts for file: {file_name}")
+
+        print(f"The word '{search_word}' appears {word_table.get(search_word, 0)} times!\n")
+
+    
+
+def get_word_table(file_name):
+
+    fd = open(file_name, 'r', encoding="utf8")
+
+    word_list = fd.read().split()
+
+    word_table = dict()
+
+    for word in word_list:
+
+        count_word(word_table, word)
+
+    fd.close()
+
+    return word_table
+
+def compare_text(fname1, fname2):
+
+    sim_score = similarity(get_word_table(fname1), get_word_table(fname2))
+
+    return sim_score
+
+def recommend_text(query_file):
+
+    max_similarity = 0
+
+    recommended_file = ""
+
+    for file in files:
+
+        if file == query_file:
+
+            continue
+
+        similarity_score = compare_text(query_file, file)
+
+        if similarity_score > max_similarity:
+
+            max_similarity = similarity_score
+
+            recommended_file = file
+
+    print(f"The recommended file for '{query_file}' is '{recommended_file}'")
+
+    print()
+
+    return recommended_file
+
+    
+
+def best_pair():
+
+    max_similarity = 0
+
+    best_pair = ()
+
+    for i in range(len(files)):
+
+        for j in range(i + 1, len(files)):
+
+            similarity_score = compare_text(files[i], files[j])
+
+            if similarity_score > max_similarity:
+
+                max_similarity = similarity_score
+
+                best_pair = (files[i], files[j])
+
+    return best_pair
+
+def count_word2(word_table, item):
+
+    word = clean_word(item)
+
+    if word not in stop_list:
+
+        if word in word_table:
+
+            word_table[word] += 1
+
+        else:
+
+            word_table[word] = 1
