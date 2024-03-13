@@ -1,10 +1,9 @@
-color_mixer
+text_compare
 ============
 
-This program has various functions to determine color combinations and averages for the primary colors.
+This program compares a list of texts/documents through multiple functions and returns two texts with the highest similarity score and counts the  amount of times words appear in a document.
 
 What I learned
 ============
-- working with infiles
-- importing databases
-- creating outfiles
+- working with .strip, .lower(), .endswith()
+- accessing external files
